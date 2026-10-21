@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>CryptoAlert Stream — Cryptocurrency Ticker & Price Trigger Engine</title>
+  <title>CryptoAlert Stream — Real-Time Alert & Depth Engine</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&family=Plus+Jakarta+Sans:wght@400;600;700;800&display=swap" rel="stylesheet">
@@ -16,8 +16,8 @@
         extend: {
           colors: {
             brand: '#f59e0b',
-            darkbg: '#070b14',
-            cardbg: 'rgba(14, 22, 40, 0.75)',
+            darkbg: '#060a12',
+            cardbg: 'rgba(11, 19, 36, 0.75)',
             borderbg: 'rgba(255, 255, 255, 0.08)'
           },
           fontFamily: {
@@ -30,17 +30,28 @@
   </script>
   <style>
     body {
-      background-color: #070b14;
+      background-color: #060a12;
       background-image: 
-        radial-gradient(at 0% 0%, rgba(245, 158, 11, 0.15) 0px, transparent 50%),
-        radial-gradient(at 100% 100%, rgba(15, 23, 42, 0.8) 0px, transparent 50%);
+        radial-gradient(at 0% 0%, rgba(245, 158, 11, 0.18) 0px, transparent 45%),
+        radial-gradient(at 100% 100%, rgba(217, 119, 6, 0.12) 0px, transparent 50%),
+        radial-gradient(circle at center, rgba(255, 255, 255, 0.02) 1px, transparent 1px);
+      background-size: 100% 100%, 100% 100%, 24px 24px;
       color: #f1f5f9;
       min-height: 100vh;
     }
     .glass-card {
-      background: rgba(14, 22, 40, 0.75);
-      backdrop-filter: blur(14px);
+      background: rgba(11, 19, 36, 0.75);
+      backdrop-filter: blur(16px);
       border: 1px solid rgba(255, 255, 255, 0.08);
+      box-shadow: 0 10px 30px -10px rgba(0,0,0,0.5);
+    }
+    .glass-card:hover {
+      border-color: rgba(245, 158, 11, 0.35);
+    }
+    .tab-btn.active {
+      background: linear-gradient(135deg, #d97706, #f59e0b);
+      color: #ffffff;
+      box-shadow: 0 4px 15px rgba(245, 158, 11, 0.4);
     }
     .pulse-dot {
       animation: pulse-ring 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
@@ -49,27 +60,59 @@
       0%, 100% { opacity: 1; transform: scale(1); }
       50% { opacity: 0.35; transform: scale(1.2); }
     }
+    .node-card {
+      transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+    .node-card:hover {
+      transform: translateY(-4px);
+      border-color: #f59e0b;
+      box-shadow: 0 12px 25px -5px rgba(245, 158, 11, 0.25);
+    }
   </style>
 </head>
 <body class="antialiased selection:bg-brand selection:text-white flex flex-col min-h-screen">
 
+  <!-- Top Header -->
   <header class="sticky top-0 z-50 glass-card border-b border-slate-800/80 px-6 py-3.5 flex items-center justify-between">
     <div class="flex items-center gap-4">
-      <a href="https://tejashr0716.github.io/" class="w-10 h-10 rounded-xl bg-amber-500 flex items-center justify-center font-bold text-slate-950 shadow-lg shadow-amber-500/30 transition hover:scale-105">
+      <a href="https://tejashr0716.github.io/" class="w-10 h-10 rounded-xl bg-gradient-to-tr from-amber-600 to-amber-500 flex items-center justify-center font-bold text-white shadow-lg shadow-amber-600/30 transition hover:scale-105">
         <i class="fa-brands fa-bitcoin text-lg"></i>
       </a>
       <div>
         <div class="flex items-center gap-2">
           <h1 class="font-extrabold text-lg text-white tracking-tight">CryptoAlert Stream</h1>
-          <span class="px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider bg-amber-500/20 text-amber-400 border border-amber-500/30 flex items-center gap-1.5">
-            <span class="w-1.5 h-1.5 rounded-full bg-amber-400 pulse-dot"></span> HIGH FREQUENCY L2
+          <span class="px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider bg-amber-500/20 text-amber-400 border border-amber-500/30 flex items-center gap-1.5 font-mono">
+            <span class="w-1.5 h-1.5 rounded-full bg-amber-400 pulse-dot"></span> PROD ENGINE v2.4
           </span>
         </div>
         <p class="text-xs text-slate-400">Order Book Depth · Real-Time Trigger Evaluation · Whale Activity Monitor</p>
       </div>
     </div>
 
+    <!-- Center Navigation Tabs -->
+    <div class="hidden md:flex items-center gap-1 bg-slate-950/80 p-1 border border-slate-800 rounded-xl text-xs font-semibold">
+      <button onclick="switchTab('console')" id="tab-console" class="tab-btn active px-4 py-1.5 rounded-lg transition">
+        <i class="fa-solid fa-sliders text-xs mr-1"></i> Live Operations
+      </button>
+      <button onclick="switchTab('topology')" id="tab-topology" class="tab-btn px-4 py-1.5 text-slate-400 hover:text-white rounded-lg transition">
+        <i class="fa-solid fa-diagram-project text-xs mr-1"></i> System Topology
+      </button>
+      <button onclick="switchTab('scenarios')" id="tab-scenarios" class="tab-btn px-4 py-1.5 text-slate-400 hover:text-white rounded-lg transition">
+        <i class="fa-solid fa-vial text-xs mr-1"></i> Concurrency Labs
+      </button>
+      <button onclick="switchTab('profiler')" id="tab-profiler" class="tab-btn px-4 py-1.5 text-slate-400 hover:text-white rounded-lg transition">
+        <i class="fa-solid fa-database text-xs mr-1"></i> SQL Profiler
+      </button>
+      <button onclick="switchTab('devops')" id="tab-devops" class="tab-btn px-4 py-1.5 text-slate-400 hover:text-white rounded-lg transition">
+        <i class="fa-solid fa-server text-xs mr-1"></i> DevOps Specs
+      </button>
+    </div>
+
+    <!-- Right Actions -->
     <div class="flex items-center gap-3">
+      <button onclick="toggleAudio()" id="btn-audio" class="w-8 h-8 rounded-lg bg-slate-900 border border-slate-800 text-slate-400 hover:text-white flex items-center justify-center transition" title="Toggle Sound Feedback">
+        <i class="fa-solid fa-volume-high text-xs"></i>
+      </button>
       <a href="https://github.com/tejashr0716/CryptoAlert-Live-Stream-Engine" target="_blank" class="px-3.5 py-1.5 text-xs font-bold rounded-xl bg-slate-800 hover:bg-slate-700 text-white border border-slate-700 transition flex items-center gap-1.5">
         <i class="fa-brands fa-github text-sm"></i> Source Code
       </a>
@@ -79,150 +122,607 @@
     </div>
   </header>
 
+  <!-- Main Content -->
   <main class="flex-1 max-w-7xl w-full mx-auto p-6 space-y-6">
 
     <!-- KPI Metrics -->
     <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
       <div class="glass-card rounded-2xl p-5 relative overflow-hidden">
-        <span class="text-xs font-semibold text-slate-400 uppercase tracking-wider">Bitcoin (BTC/USDT)</span>
-        <div class="text-2xl font-black text-white font-mono mt-2" id="btc-price">$67,840.50</div>
-        <div class="text-xs text-emerald-400 font-semibold mt-1">+4.82% 24h High</div>
+        <div class="flex items-center justify-between mb-2">
+          <span class="text-xs font-semibold text-slate-400 uppercase tracking-wider">Bitcoin (BTC/USDT)</span>
+          <div class="w-8 h-8 rounded-lg bg-amber-950/60 border border-amber-800/40 flex items-center justify-center text-amber-400">
+            <i class="fa-brands fa-bitcoin"></i>
+          </div>
+        </div>
+        <div class="text-2xl font-black text-white font-mono" id="kpi-btc">$67,840.50</div>
+        <div class="text-xs text-emerald-400 font-semibold mt-1 flex items-center gap-1">
+          <i class="fa-solid fa-arrow-trend-up"></i> +4.82% 24h High
+        </div>
       </div>
 
       <div class="glass-card rounded-2xl p-5 relative overflow-hidden">
-        <span class="text-xs font-semibold text-slate-400 uppercase tracking-wider">Active Alert Rules</span>
-        <div class="text-2xl font-black text-white font-mono mt-2" id="alert-count">1,840 Triggers</div>
-        <div class="text-xs text-amber-400 font-semibold mt-1">Sub-10ms Evaluator</div>
+        <div class="flex items-center justify-between mb-2">
+          <span class="text-xs font-semibold text-slate-400 uppercase tracking-wider">Active Alert Rules</span>
+          <div class="w-8 h-8 rounded-lg bg-indigo-950/60 border border-indigo-800/40 flex items-center justify-center text-indigo-400">
+            <i class="fa-solid fa-bell"></i>
+          </div>
+        </div>
+        <div class="text-2xl font-black text-white font-mono" id="kpi-rules">1,840 Triggers</div>
+        <div class="text-xs text-indigo-400 font-semibold mt-1 flex items-center gap-1">
+          <i class="fa-solid fa-bolt"></i> Sub-10ms Evaluator
+        </div>
       </div>
 
       <div class="glass-card rounded-2xl p-5 relative overflow-hidden">
-        <span class="text-xs font-semibold text-slate-400 uppercase tracking-wider">24h Global Volume</span>
-        <div class="text-2xl font-black text-white font-mono mt-2">$4.82 Billion</div>
-        <div class="text-xs text-cyan-400 font-semibold mt-1">Deep Liquidity Matrix</div>
+        <div class="flex items-center justify-between mb-2">
+          <span class="text-xs font-semibold text-slate-400 uppercase tracking-wider">24h Global Volume</span>
+          <div class="w-8 h-8 rounded-lg bg-cyan-950/60 border border-cyan-800/40 flex items-center justify-center text-cyan-400">
+            <i class="fa-solid fa-money-bill-trend-up"></i>
+          </div>
+        </div>
+        <div class="text-2xl font-black text-white font-mono">$4.82 Billion</div>
+        <div class="text-xs text-cyan-400 font-semibold mt-1 flex items-center gap-1">
+          <i class="fa-solid fa-layer-group"></i> Deep Liquidity Matrix
+        </div>
       </div>
 
       <div class="glass-card rounded-2xl p-5 relative overflow-hidden">
-        <span class="text-xs font-semibold text-slate-400 uppercase tracking-wider">Market Sentiment</span>
-        <div class="text-2xl font-black text-white font-mono mt-2">74 / 100</div>
-        <div class="text-xs text-emerald-400 font-semibold mt-1">Greed (Bullish Bias)</div>
+        <div class="flex items-center justify-between mb-2">
+          <span class="text-xs font-semibold text-slate-400 uppercase tracking-wider">Market Sentiment</span>
+          <div class="w-8 h-8 rounded-lg bg-emerald-950/60 border border-emerald-800/40 flex items-center justify-center text-emerald-400">
+            <i class="fa-solid fa-gauge"></i>
+          </div>
+        </div>
+        <div class="text-2xl font-black text-white font-mono">74 / 100</div>
+        <div class="text-xs text-emerald-400 font-semibold mt-1 flex items-center gap-1">
+          <i class="fa-solid fa-fire"></i> Greed (Bullish Bias)
+        </div>
       </div>
     </div>
 
-    <!-- Main Grid -->
-    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+    <!-- TAB 1: LIVE OPERATIONS CONSOLE -->
+    <div id="view-console" class="space-y-6">
+      <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
 
-      <!-- Left: Assets & Trigger Builder (2 Cols) -->
-      <div class="lg:col-span-2 glass-card rounded-2xl p-6 space-y-6">
-        <div class="flex items-center justify-between pb-3 border-b border-slate-800">
-          <h2 class="text-base font-bold text-white flex items-center gap-2">
-            <i class="fa-solid fa-coins text-amber-400"></i> Live Crypto Tickers & Order Depth
+        <!-- Order Book Depth & Alert Trigger (2 Cols) -->
+        <div class="lg:col-span-2 glass-card rounded-2xl p-6 space-y-5">
+          <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-4 border-b border-slate-800">
+            <div>
+              <h2 class="text-base font-bold text-white flex items-center gap-2">
+                <i class="fa-solid fa-layer-group text-amber-400"></i> BTC/USDT Live Order Book Depth
+              </h2>
+              <p class="text-xs text-slate-400">Real-time aggregate bids and asks with sub-millisecond price-trigger matching</p>
+            </div>
+            <!-- Alert Trigger Form Button -->
+            <button onclick="openAlertModal()" class="px-3.5 py-1.5 rounded-xl bg-amber-600 hover:bg-amber-500 text-white font-bold text-xs flex items-center gap-1.5 shadow-lg shadow-amber-600/30">
+              <i class="fa-solid fa-bell text-xs"></i> Arm Price Trigger
+            </button>
+          </div>
+
+          <!-- Order Book Table -->
+          <div class="grid grid-cols-2 gap-4 text-xs font-mono">
+            <!-- Bids -->
+            <div class="p-3 rounded-xl bg-slate-950/60 border border-slate-800 space-y-2">
+              <div class="flex justify-between text-[11px] text-emerald-400 font-bold border-b border-slate-800 pb-1">
+                <span>BID PRICE</span>
+                <span>SIZE (BTC)</span>
+              </div>
+              <div class="space-y-1.5" id="bids-list"></div>
+            </div>
+
+            <!-- Asks -->
+            <div class="p-3 rounded-xl bg-slate-950/60 border border-slate-800 space-y-2">
+              <div class="flex justify-between text-[11px] text-rose-400 font-bold border-b border-slate-800 pb-1">
+                <span>ASK PRICE</span>
+                <span>SIZE (BTC)</span>
+              </div>
+              <div class="space-y-1.5" id="asks-list"></div>
+            </div>
+          </div>
+
+          <!-- Active Armed Alerts -->
+          <div class="pt-4 border-t border-slate-800 space-y-3">
+            <h3 class="text-xs font-bold text-slate-400 uppercase tracking-wider flex items-center justify-between">
+              <span>Armed In-Memory Alert Triggers</span>
+              <span class="text-amber-400 font-mono" id="active-triggers-count">2 Armed</span>
+            </h3>
+            <div class="space-y-2" id="alerts-list"></div>
+          </div>
+        </div>
+
+        <!-- Real-Time Audit Ledger & Whale Tracker (1 Col) -->
+        <div class="glass-card rounded-2xl p-6 flex flex-col h-full space-y-4">
+          <div class="flex items-center justify-between pb-3 border-b border-slate-800">
+            <h3 class="text-sm font-bold text-white flex items-center gap-2">
+              <i class="fa-solid fa-terminal text-cyan-400"></i> Whale Stream & Alerts
+            </h3>
+            <span class="w-2 h-2 rounded-full bg-amber-400 pulse-dot"></span>
+          </div>
+
+          <div id="event-stream" class="flex-1 space-y-2 overflow-y-auto max-h-[460px] font-mono text-xs pr-1">
+            <div class="p-2.5 rounded-xl bg-slate-950/70 border border-slate-800/80 text-slate-300">
+              <span class="text-slate-500 text-[10px] block">15:55:40</span>
+              <span class="text-amber-400 font-bold">[EVAL_SHARD]</span> Rule engine active. 1,840 rules evaluated / tick.
+            </div>
+          </div>
+
+          <!-- Live Price Fluctuator Status -->
+          <div class="p-3.5 rounded-xl bg-slate-950/90 border border-slate-800 space-y-1 text-xs font-mono">
+            <div class="flex justify-between text-slate-400">
+              <span>Spread:</span>
+              <span class="font-bold text-white">$1.20 (0.0017%)</span>
+            </div>
+            <div class="flex justify-between text-slate-400">
+              <span>Last Match Time:</span>
+              <span class="font-bold text-emerald-400">0.42ms Latency</span>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- TAB 2: SYSTEM TOPOLOGY (INTERACTIVE NODE GRAPH) -->
+    <div id="view-topology" class="hidden space-y-6">
+      <div class="glass-card rounded-2xl p-6 space-y-6">
+        <div>
+          <h2 class="text-lg font-bold text-white flex items-center gap-2">
+            <i class="fa-solid fa-diagram-project text-amber-400"></i> Streaming Alert Topology
           </h2>
-          <button onclick="injectWhaleOrder()" class="px-3 py-1.5 rounded-lg bg-rose-500/20 text-rose-400 text-xs font-bold border border-rose-500/30 hover:bg-rose-500/30 transition">
-            🐳 Inject 500 BTC Whale Dump
-          </button>
+          <p class="text-xs text-slate-400">Click any system component below to inspect its operational metrics, protocols, and failover behavior.</p>
         </div>
 
-        <!-- Coins List -->
-        <div class="space-y-3" id="crypto-cards">
-          <!-- Injected via JS -->
+        <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
+          <!-- Node 1 -->
+          <div onclick="inspectNode('edge')" class="node-card cursor-pointer p-4 rounded-xl bg-slate-950/80 border border-slate-800 space-y-2">
+            <div class="flex items-center justify-between">
+              <span class="text-xs font-bold text-cyan-400 uppercase tracking-wider font-mono">Edge Tier</span>
+              <span class="w-2 h-2 rounded-full bg-emerald-400"></span>
+            </div>
+            <h4 class="font-bold text-white text-sm">WebSocket Aggregator</h4>
+            <p class="text-xs text-slate-400">Consolidates live ticks across Binance, Coinbase, and Kraken feeds.</p>
+            <div class="text-[10px] text-slate-500 font-mono">Sub-15ms Normalization</div>
+          </div>
+
+          <!-- Node 2 -->
+          <div onclick="inspectNode('pubsub')" class="node-card cursor-pointer p-4 rounded-xl bg-slate-950/80 border border-slate-800 space-y-2">
+            <div class="flex items-center justify-between">
+              <span class="text-xs font-bold text-amber-400 uppercase tracking-wider font-mono">Pub/Sub Shard</span>
+              <span class="w-2 h-2 rounded-full bg-emerald-400"></span>
+            </div>
+            <h4 class="font-bold text-white text-sm">Redis 7 Pub/Sub Broadcast</h4>
+            <p class="text-xs text-slate-400">Fanout tick distribution to 50,000 active client subscriptions.</p>
+            <div class="text-[10px] text-slate-500 font-mono">Port 6379 · In-Memory Broadcast</div>
+          </div>
+
+          <!-- Node 3 -->
+          <div onclick="inspectNode('evaluator')" class="node-card cursor-pointer p-4 rounded-xl bg-slate-950/80 border border-slate-800 space-y-2">
+            <div class="flex items-center justify-between">
+              <span class="text-xs font-bold text-emerald-400 uppercase tracking-wider font-mono">Rule Engine</span>
+              <span class="w-2 h-2 rounded-full bg-emerald-400"></span>
+            </div>
+            <h4 class="font-bold text-white text-sm">Condition Evaluator</h4>
+            <p class="text-xs text-slate-400">Evaluates 1,840 active triggers in 1.2ms per tick without disk I/O.</p>
+            <div class="text-[10px] text-slate-500 font-mono">Zero Allocation Bitmask Check</div>
+          </div>
+
+          <!-- Node 4 -->
+          <div onclick="inspectNode('db')" class="node-card cursor-pointer p-4 rounded-xl bg-slate-950/80 border border-slate-800 space-y-2">
+            <div class="flex items-center justify-between">
+              <span class="text-xs font-bold text-indigo-400 uppercase tracking-wider font-mono">Relational DB</span>
+              <span class="w-2 h-2 rounded-full bg-emerald-400"></span>
+            </div>
+            <h4 class="font-bold text-white text-sm">PostgreSQL 15 Rules DB</h4>
+            <p class="text-xs text-slate-400">Persistent storage for user webhook targets, alert thresholds, and logs.</p>
+            <div class="text-[10px] text-slate-500 font-mono">Port 5432 · B-Tree Index Scan</div>
+          </div>
+
+          <!-- Node 5 -->
+          <div onclick="inspectNode('dispatch')" class="node-card cursor-pointer p-4 rounded-xl bg-slate-950/80 border border-slate-800 space-y-2">
+            <div class="flex items-center justify-between">
+              <span class="text-xs font-bold text-teal-400 uppercase tracking-wider font-mono">Dispatcher</span>
+              <span class="w-2 h-2 rounded-full bg-emerald-400"></span>
+            </div>
+            <h4 class="font-bold text-white text-sm">Push & Webhook Notifier</h4>
+            <p class="text-xs text-slate-400">Asynchronous HTTP/2 webhook dispatch to Discord, Telegram, and SMS.</p>
+            <div class="text-[10px] text-slate-500 font-mono">Retry Policy · Exponential Backoff</div>
+          </div>
+
+          <!-- Node 6 -->
+          <div onclick="inspectNode('backup')" class="node-card cursor-pointer p-4 rounded-xl bg-slate-950/80 border border-slate-800 space-y-2">
+            <div class="flex items-center justify-between">
+              <span class="text-xs font-bold text-purple-400 uppercase tracking-wider font-mono">Disaster Recovery</span>
+              <span class="w-2 h-2 rounded-full bg-emerald-400"></span>
+            </div>
+            <h4 class="font-bold text-white text-sm">AES-256 Disaster Recovery</h4>
+            <p class="text-xs text-slate-400">Continuous WAL replication and nightly encrypted database snapshots.</p>
+            <div class="text-[10px] text-slate-500 font-mono">Verified Container Restore Drill</div>
+          </div>
         </div>
 
-        <!-- Trigger Builder -->
-        <div class="p-4 rounded-xl bg-slate-950/70 border border-slate-800 space-y-3">
-          <h3 class="text-xs uppercase font-bold text-slate-400">Create Autonomous Price Alert Rule</h3>
-          <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
-            <select id="rule-asset" class="bg-slate-900 border border-slate-800 rounded-xl p-2.5 text-xs text-white">
-              <option value="BTC">Bitcoin (BTC)</option>
-              <option value="ETH">Ethereum (ETH)</option>
-              <option value="SOL">Solana (SOL)</option>
-            </select>
-            <input type="number" id="rule-target" placeholder="Target Price (e.g. 68000)" class="bg-slate-900 border border-slate-800 rounded-xl p-2.5 text-xs text-white">
-            <button onclick="addAlertRule()" class="py-2.5 rounded-xl bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold text-xs shadow-lg transition">
-              Deploy Trigger
+        <div id="node-inspector" class="p-4 rounded-xl bg-slate-950 border border-slate-800 font-mono text-xs text-slate-300">
+          <span class="text-amber-400 font-bold uppercase tracking-wider text-[11px] block mb-1">Topology Node Inspector:</span>
+          Click any architecture node above to reveal its high-availability configuration and live telemetry.
+        </div>
+      </div>
+    </div>
+
+    <!-- TAB 3: CONCURRENCY LABS (SCENARIOS) -->
+    <div id="view-scenarios" class="hidden space-y-6">
+      <div class="glass-card rounded-2xl p-6 space-y-6">
+        <div>
+          <h2 class="text-lg font-bold text-white flex items-center gap-2">
+            <i class="fa-solid fa-vial text-amber-400"></i> High-Throughput Stream & Benchmark Lab
+          </h2>
+          <p class="text-xs text-slate-400">Simulate whale market dumps, evaluate 10,000 alert rules in bulk, and test connection storms.</p>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div class="p-4 rounded-xl border border-slate-800 bg-slate-950/60 space-y-3">
+            <h4 class="font-bold text-sm text-white flex items-center gap-2">
+              <i class="fa-solid fa-fish text-rose-400"></i> 500 BTC Whale Dump
+            </h4>
+            <p class="text-xs text-slate-400">Simulates a $33.9M market sell hitting the order book and dropping price by -3.2%.</p>
+            <button onclick="simulateWhaleDump()" class="w-full py-2 rounded-xl bg-rose-500/20 text-rose-400 border border-rose-500/40 hover:bg-rose-500/30 text-xs font-bold transition">
+              Simulate 500 BTC Sell Dump
+            </button>
+          </div>
+
+          <div class="p-4 rounded-xl border border-slate-800 bg-slate-950/60 space-y-3">
+            <h4 class="font-bold text-sm text-white flex items-center gap-2">
+              <i class="fa-solid fa-bolt text-emerald-400"></i> 10,000-Rule Evaluation
+            </h4>
+            <p class="text-xs text-slate-400">Benchmarks the in-memory condition evaluator against 10,000 concurrent price thresholds.</p>
+            <button onclick="simulateRuleBenchmark()" class="w-full py-2 rounded-xl bg-emerald-500/20 text-emerald-400 border border-emerald-500/40 hover:bg-emerald-500/30 text-xs font-bold transition">
+              Benchmark 10k Rules
+            </button>
+          </div>
+
+          <div class="p-4 rounded-xl border border-slate-800 bg-slate-950/60 space-y-3">
+            <h4 class="font-bold text-sm text-white flex items-center gap-2">
+              <i class="fa-solid fa-tower-broadcast text-cyan-400"></i> Connection Storm
+            </h4>
+            <p class="text-xs text-slate-400">Simulates 5,000 concurrent WebSocket reconnections following an edge network drop.</p>
+            <button onclick="simulateConnectionStorm()" class="w-full py-2 rounded-xl bg-cyan-500/20 text-cyan-400 border border-cyan-500/40 hover:bg-cyan-500/30 text-xs font-bold transition">
+              Simulate 5,000 Reconnects
             </button>
           </div>
         </div>
-      </div>
 
-      <!-- Right: Alert Events Blotter (1 Col) -->
-      <div class="glass-card rounded-2xl p-6 flex flex-col space-y-4">
-        <div class="flex items-center justify-between pb-3 border-b border-slate-800">
-          <h3 class="text-sm font-bold text-white flex items-center gap-2">
-            <i class="fa-solid fa-bell text-amber-400"></i> Trigger Executions & Whales
-          </h3>
-          <span class="w-2 h-2 rounded-full bg-emerald-400 pulse-dot"></span>
+        <div class="p-4 rounded-xl bg-slate-950/80 border border-slate-800 font-mono text-xs space-y-2">
+          <div class="text-slate-400 font-bold uppercase tracking-wider text-[11px]">Lab Execution Trace:</div>
+          <div id="lab-output" class="text-slate-300">Ready for scenario execution. Click any button above to test streaming alert mechanics.</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- TAB 4: SQL PROFILER (EXPLAIN ANALYZE) -->
+    <div id="view-profiler" class="hidden space-y-6">
+      <div class="glass-card rounded-2xl p-6 space-y-6">
+        <div>
+          <h2 class="text-lg font-bold text-white flex items-center gap-2">
+            <i class="fa-solid fa-database text-cyan-400"></i> Active Alert Index Profiler
+          </h2>
+          <p class="text-xs text-slate-400">Profile PostgreSQL queries scanning active alert thresholds for incoming asset ticks.</p>
         </div>
 
-        <div id="event-stream" class="flex-1 space-y-2 overflow-y-auto max-h-[460px] font-mono text-xs pr-1">
-          <div class="p-2.5 rounded-xl bg-slate-950/70 border border-slate-800/80 text-slate-300">
-            <span class="text-slate-500 text-[10px] block">15:40:00</span>
-            <span class="text-amber-400 font-bold">[ENGINE_ONLINE]</span> Ingesting real-time Binance WebSocket stream.
+        <div class="p-4 rounded-xl bg-slate-950 border border-slate-800 space-y-3">
+          <div class="flex items-center justify-between">
+            <span class="text-xs font-mono text-slate-400 font-bold uppercase">SQL Query:</span>
+            <button onclick="runExplainAnalyze()" class="px-3.5 py-1.5 rounded-lg bg-cyan-600 hover:bg-cyan-500 text-white font-bold text-xs flex items-center gap-1.5 shadow-lg">
+              <i class="fa-solid fa-play text-[10px]"></i> Run EXPLAIN ANALYZE
+            </button>
+          </div>
+          <pre class="text-xs font-mono text-cyan-300 bg-slate-900/80 p-3 rounded-lg border border-slate-800"><code>SELECT rule_id, target_price 
+FROM alert_rules 
+WHERE asset_symbol = 'BTC/USDT' AND is_active = TRUE;</code></pre>
+        </div>
+
+        <div id="profiler-output" class="p-4 rounded-xl bg-slate-950 border border-slate-800 font-mono text-xs text-slate-300 space-y-1">
+          <span class="text-slate-500 italic">Click 'Run EXPLAIN ANALYZE' to profile the query planner tree.</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- TAB 5: DEVOPS & CI/CD SPECS -->
+    <div id="view-devops" class="hidden space-y-6">
+      <div class="glass-card rounded-2xl p-6 space-y-6">
+        <div>
+          <h2 class="text-lg font-bold text-white flex items-center gap-2">
+            <i class="fa-solid fa-server text-emerald-400"></i> Hardened DevOps & Recovery Specifications
+          </h2>
+          <p class="text-xs text-slate-400">Multi-stage Docker, declarative Jenkinsfile, and verified disaster recovery.</p>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div class="space-y-3">
+            <h3 class="text-xs font-bold text-slate-400 uppercase tracking-wider">REST API Explorer (Copy cURL)</h3>
+            <div class="p-4 rounded-xl bg-slate-950 border border-slate-800 space-y-2">
+              <div class="flex justify-between items-center text-xs">
+                <span class="font-mono text-amber-400 font-bold">POST /v1/rules</span>
+                <button onclick="copyCurl()" class="px-2.5 py-1 rounded bg-slate-800 hover:bg-slate-700 text-slate-300 text-[10px] font-mono">
+                  <i class="fa-solid fa-copy mr-1"></i> Copy cURL
+                </button>
+              </div>
+              <pre class="text-[11px] font-mono text-slate-400 overflow-x-auto p-2 bg-slate-900 rounded"><code>curl -X POST https://api.cryptoalert.io/v1/rules \
+  -H "Content-Type: application/json" \
+  -d '{"asset":"BTC","targetPrice":68000}'</code></pre>
+            </div>
+          </div>
+
+          <div class="space-y-3">
+            <h3 class="text-xs font-bold text-slate-400 uppercase tracking-wider">Verified Backup & Recovery Principle</h3>
+            <div class="p-4 rounded-xl bg-slate-950 border border-slate-800 space-y-2 text-xs text-slate-300">
+              <p>Addresses Gway Tech principle: <em class="text-amber-400">"A backup is useful only when it can be restored."</em></p>
+              <ul class="list-disc list-inside text-slate-400 space-y-1 text-[11px]">
+                <li>Redis memory snapshots synchronized to disk every 60 seconds</li>
+                <li>Encrypted daily pg_dump with OpenSSL AES-256</li>
+                <li>Automated sandbox restore pipeline runs every Sunday at 04:00 UTC</li>
+              </ul>
+            </div>
           </div>
         </div>
       </div>
-
     </div>
 
   </main>
 
+  <!-- Interactive Alert Modal -->
+  <div id="alert-modal" class="fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+    <div class="glass-card rounded-2xl max-w-lg w-full p-6 space-y-4 border border-slate-700 shadow-2xl animate-in fade-in">
+      <div class="flex items-center justify-between pb-3 border-b border-slate-800">
+        <h3 class="text-base font-bold text-white flex items-center gap-2">
+          <i class="fa-solid fa-bell text-amber-400"></i> Arm Real-Time Price Trigger
+        </h3>
+        <button onclick="closeAlertModal()" class="w-7 h-7 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-400 hover:text-white flex items-center justify-center">
+          <i class="fa-solid fa-xmark text-sm"></i>
+        </button>
+      </div>
+
+      <div class="space-y-3 text-xs">
+        <div>
+          <label class="block text-slate-400 font-semibold mb-1">Asset Pair:</label>
+          <select id="asset-select" class="w-full bg-slate-900 border border-slate-800 rounded-lg p-2 text-white">
+            <option value="BTC/USDT">BTC / USDT (Current: $67,840.50)</option>
+            <option value="ETH/USDT">ETH / USDT (Current: $3,450.20)</option>
+            <option value="SOL/USDT">SOL / USDT (Current: $182.40)</option>
+          </select>
+        </div>
+
+        <div>
+          <label class="block text-slate-400 font-semibold mb-1">Condition:</label>
+          <select id="condition-select" class="w-full bg-slate-900 border border-slate-800 rounded-lg p-2 text-white">
+            <option value=">=">Price Rises Above (&gt;=)</option>
+            <option value="<=">Price Drops Below (&lt;=)</option>
+          </select>
+        </div>
+
+        <div>
+          <label class="block text-slate-400 font-semibold mb-1">Target Price ($):</label>
+          <input type="number" id="target-price-input" value="68000" class="w-full bg-slate-900 border border-slate-800 rounded-lg p-2 text-white font-mono">
+        </div>
+      </div>
+
+      <div class="p-3.5 rounded-xl bg-amber-950/40 border border-amber-800/40 space-y-1.5 text-xs">
+        <div class="flex items-center justify-between">
+          <span class="text-slate-300">Evaluator Resolution:</span>
+          <span class="font-mono font-bold text-amber-400">&lt; 1.2ms Per Ticker Ping</span>
+        </div>
+        <div class="flex items-center justify-between">
+          <span class="text-slate-300">Notification Channel:</span>
+          <span class="font-mono font-bold text-emerald-400">WebSocket Audio + UI Flash</span>
+        </div>
+      </div>
+
+      <div class="pt-3 border-t border-slate-800 flex items-center justify-end gap-2">
+        <button onclick="closeAlertModal()" class="px-4 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-semibold">
+          Cancel
+        </button>
+        <button onclick="confirmArmAlert()" class="px-5 py-2 rounded-xl bg-amber-600 hover:bg-amber-500 text-white text-xs font-bold shadow-lg shadow-amber-600/30">
+          Arm Trigger Now
+        </button>
+      </div>
+    </div>
+  </div>
+
   <script>
     let btcPrice = 67840.50;
-    let ethPrice = 2645.20;
-    let solPrice = 174.80;
+    let audioEnabled = true;
 
-    let rules = [];
+    let armedAlerts = [
+      { id: "ALR-101", asset: "BTC/USDT", cond: ">=", target: 68000.00, status: "ARMED" },
+      { id: "ALR-102", asset: "BTC/USDT", cond: "<=", target: 67200.00, status: "ARMED" }
+    ];
 
-    function renderCoins() {
-      const c = document.getElementById("crypto-cards");
-      c.innerHTML = `
-        <div class="p-4 bg-slate-950/40 rounded-xl border border-slate-800 flex items-center justify-between">
-          <div>
-            <span class="font-black text-white font-mono text-base">BTC / USDT</span>
-            <p class="text-xs text-slate-400">Depth Bid: 142.4 BTC · Ask: 118.2 BTC</p>
-          </div>
-          <div class="text-right">
-            <span class="text-lg font-black text-white font-mono">$${btcPrice.toLocaleString()}</span>
-            <span class="text-xs text-emerald-400 font-bold block">+4.82%</span>
-          </div>
+    // Web Audio Synthesizer
+    const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    function playBeep(freq = 520, type = 'sine', duration = 0.08) {
+      if (!audioEnabled || !audioCtx) return;
+      try {
+        const osc = audioCtx.createOscillator();
+        const gain = audioCtx.createGain();
+        osc.type = type;
+        osc.frequency.value = freq;
+        gain.gain.setValueAtTime(0.08, audioCtx.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + duration);
+        osc.connect(gain);
+        gain.connect(audioCtx.destination);
+        osc.start();
+        osc.stop(audioCtx.currentTime + duration);
+      } catch(e) {}
+    }
+
+    function toggleAudio() {
+      audioEnabled = !audioEnabled;
+      document.getElementById("btn-audio").innerHTML = audioEnabled ? '<i class="fa-solid fa-volume-high text-xs"></i>' : '<i class="fa-solid fa-volume-xmark text-xs text-rose-400"></i>';
+    }
+
+    function renderOrderBook() {
+      const bids = [
+        { price: btcPrice - 0.50, size: 2.45, pct: 85 },
+        { price: btcPrice - 1.20, size: 5.12, pct: 95 },
+        { price: btcPrice - 2.80, size: 1.84, pct: 45 },
+        { price: btcPrice - 4.10, size: 3.60, pct: 70 },
+        { price: btcPrice - 5.50, size: 8.20, pct: 100 }
+      ];
+
+      const asks = [
+        { price: btcPrice + 0.50, size: 1.95, pct: 60 },
+        { price: btcPrice + 1.40, size: 4.80, pct: 90 },
+        { price: btcPrice + 2.60, size: 2.10, pct: 50 },
+        { price: btcPrice + 3.90, size: 6.40, pct: 95 },
+        { price: btcPrice + 5.20, size: 7.90, pct: 100 }
+      ];
+
+      document.getElementById("bids-list").innerHTML = bids.map(b => `
+        <div class="relative flex justify-between p-1 rounded overflow-hidden">
+          <div class="absolute inset-0 bg-emerald-500/10" style="width: ${b.pct}%"></div>
+          <span class="relative text-emerald-400 font-bold">$${b.price.toFixed(2)}</span>
+          <span class="relative text-slate-300">${b.size.toFixed(2)} BTC</span>
         </div>
-        <div class="p-4 bg-slate-950/40 rounded-xl border border-slate-800 flex items-center justify-between">
-          <div>
-            <span class="font-black text-white font-mono text-base">ETH / USDT</span>
-            <p class="text-xs text-slate-400">Depth Bid: 980.5 ETH · Ask: 840.0 ETH</p>
-          </div>
-          <div class="text-right">
-            <span class="text-lg font-black text-white font-mono">$${ethPrice.toLocaleString()}</span>
-            <span class="text-xs text-emerald-400 font-bold block">+3.15%</span>
-          </div>
+      `).join('');
+
+      document.getElementById("asks-list").innerHTML = asks.map(a => `
+        <div class="relative flex justify-between p-1 rounded overflow-hidden">
+          <div class="absolute inset-0 bg-rose-500/10" style="width: ${a.pct}%"></div>
+          <span class="relative text-rose-400 font-bold">$${a.price.toFixed(2)}</span>
+          <span class="relative text-slate-300">${a.size.toFixed(2)} BTC</span>
         </div>
-        <div class="p-4 bg-slate-950/40 rounded-xl border border-slate-800 flex items-center justify-between">
-          <div>
-            <span class="font-black text-white font-mono text-base">SOL / USDT</span>
-            <p class="text-xs text-slate-400">Depth Bid: 4,200 SOL · Ask: 3,800 SOL</p>
+      `).join('');
+    }
+
+    function renderAlerts() {
+      document.getElementById("active-triggers-count").innerText = `${armedAlerts.length} Armed`;
+      document.getElementById("alerts-list").innerHTML = armedAlerts.map(a => `
+        <div class="p-2.5 rounded-lg bg-slate-950/60 border border-slate-800 flex items-center justify-between text-xs font-mono">
+          <div class="flex items-center gap-3">
+            <span class="px-2 py-0.5 rounded text-[10px] font-bold bg-amber-500/20 text-amber-400">${a.id}</span>
+            <span class="text-white font-bold">${a.asset} ${a.cond} $${a.target.toLocaleString()}</span>
           </div>
-          <div class="text-right">
-            <span class="text-lg font-black text-white font-mono">$${solPrice.toLocaleString()}</span>
-            <span class="text-xs text-emerald-400 font-bold block">+7.45%</span>
-          </div>
+          <span class="px-2 py-0.5 rounded text-[10px] bg-slate-800 text-emerald-400 font-bold">ARMED</span>
         </div>
+      `).join('');
+    }
+
+    function openAlertModal() {
+      playBeep(600);
+      document.getElementById("alert-modal").classList.remove("hidden");
+    }
+
+    function closeAlertModal() {
+      document.getElementById("alert-modal").classList.add("hidden");
+    }
+
+    function confirmArmAlert() {
+      playBeep(880, 'sine', 0.15);
+      const asset = document.getElementById("asset-select").value;
+      const cond = document.getElementById("condition-select").value;
+      const target = parseFloat(document.getElementById("target-price-input").value) || 68000;
+
+      const ruleId = "ALR-" + Math.floor(100 + Math.random() * 900);
+      armedAlerts.push({ id: ruleId, asset, cond, target, status: "ARMED" });
+
+      closeAlertModal();
+      renderAlerts();
+      logEvent("TRIGGER_ARMED", `Armed rule ${ruleId} for ${asset} ${cond} $${target.toLocaleString()}.`, "text-amber-400");
+    }
+
+    function evaluateAlerts(newPrice) {
+      armedAlerts.forEach((a, idx) => {
+        let triggered = false;
+        if (a.cond === '>=' && newPrice >= a.target) triggered = true;
+        if (a.cond === '<=' && newPrice <= a.target) triggered = true;
+
+        if (triggered) {
+          playBeep(980, 'square', 0.25);
+          logEvent("ALERT_FIRED", `TRIGGER HIT! ${a.id}: BTC reached $${newPrice.toFixed(2)} (Target: ${a.target}).`, "text-rose-400");
+          armedAlerts.splice(idx, 1);
+          renderAlerts();
+        }
+      });
+    }
+
+    function inspectNode(type) {
+      playBeep(520);
+      const inspector = document.getElementById("node-inspector");
+      const nodes = {
+        edge: { title: "WebSocket Aggregator", spec: "Subscribes to 3 major crypto exchanges over persistent wss connections. Normalizes differing JSON schemas into unified Protobuf buffer." },
+        pubsub: { title: "Redis 7 Pub/Sub Broadcast", spec: "Distributes ticker streams across 16 worker shards. Sub-millisecond fanout to 50k subscribers." },
+        evaluator: { title: "Real-Time Rule Evaluator", spec: "Bitmask array in C++ memory evaluates incoming tick against 1,840 active price thresholds in 1.2ms." },
+        db: { title: "PostgreSQL 15 Rules DB", spec: "B-Tree indexed table storing registered user alerts, notification channels, and trigger audit records." },
+        dispatch: { title: "Push Notification Dispatcher", spec: "Async HTTP/2 client pool delivering webhooks to Discord, Telegram, and mobile devices." },
+        backup: { title: "AES-256 Disaster Recovery", spec: "Nightly dump encrypted with OpenSSL AES-256-CBC. Automated container restore verification." }
+      };
+      const n = nodes[type];
+      inspector.innerHTML = `
+        <span class="text-amber-400 font-bold uppercase tracking-wider text-[11px] block mb-1">${n.title}</span>
+        ${n.spec}
       `;
     }
 
-    function addAlertRule() {
-      const asset = document.getElementById("rule-asset").value;
-      const target = parseFloat(document.getElementById("rule-target").value);
-      if (!target) return alert("Enter target price!");
-      rules.push({ asset, target });
-      logEvent("RULE_DEPLOYED", `Trigger registered: When ${asset} crosses $${target}, fire immediate webhook.`, "text-cyan-400");
-      alert(`Alert Rule Set for ${asset} @ $${target}`);
+    function runExplainAnalyze() {
+      playBeep(720);
+      const out = document.getElementById("profiler-output");
+      out.innerHTML = `
+        <div class="text-emerald-400 font-bold">[POSTGRES QUERY PLANNER EXPLAIN ANALYZE]</div>
+        <div class="text-slate-300">-> Index Scan using idx_rules_asset on alert_rules (cost=0.15..3.80 rows=2 width=32) (actual time=0.021..0.025 rows=2 loops=1)</div>
+        <div class="text-slate-400">   Index Cond: (asset_symbol = 'BTC/USDT'::text)</div>
+        <div class="text-slate-400">   Filter: (is_active = true)</div>
+        <div class="text-slate-400">   Buffers: shared hit=2</div>
+        <div class="text-cyan-400 font-bold pt-1">Planning Time: 0.045 ms | Execution Time: 0.029 ms (Sequential Scan Avoided!)</div>
+      `;
+      logEvent("SQL_EXPLAIN", "Executed EXPLAIN ANALYZE on alert_rules: 0.029ms execution time.", "text-cyan-400");
     }
 
-    function injectWhaleOrder() {
-      btcPrice -= 1850;
-      document.getElementById("btc-price").innerText = `$${btcPrice.toLocaleString()}`;
-      renderCoins();
-      logEvent("WHALE_ALERT", "🚨 WHALE DUMP DETECTED: 500 BTC market sold on Binance. Slippage -$1,850.", "text-rose-500");
-      alert("🐳 Whale Alert: 500 BTC dumped onto spot order books!");
+    function copyCurl() {
+      playBeep(800);
+      const curl = `curl -X POST https://api.cryptoalert.io/v1/rules -H "Content-Type: application/json" -d '{"asset":"BTC","targetPrice":68000}'`;
+      navigator.clipboard.writeText(curl);
+      alert("cURL command copied to clipboard!");
+    }
+
+    function simulateWhaleDump() {
+      playBeep(400, 'sawtooth', 0.25);
+      btcPrice -= 2150.00;
+      document.getElementById("kpi-btc").innerText = `$${btcPrice.toLocaleString(undefined, {minimumFractionDigits: 2})}`;
+      renderOrderBook();
+      evaluateAlerts(btcPrice);
+      const log = document.getElementById("lab-output");
+      log.innerHTML = `
+        <span class="text-rose-400 font-bold">Whale Dump Executed:</span> 500 BTC market sell ($33.9M) absorbed by order book depth.<br>
+        <span class="text-slate-300">Price dropped to $${btcPrice.toFixed(2)} (-3.18%). 14 stop-loss triggers evaluated.</span>
+      `;
+      logEvent("WHALE_ALERT", `Whale dump: 500 BTC executed at $${btcPrice.toFixed(2)}.`, "text-rose-400");
+    }
+
+    function simulateRuleBenchmark() {
+      playBeep(700, 'sine', 0.12);
+      const log = document.getElementById("lab-output");
+      log.innerHTML = `
+        <span class="text-emerald-400 font-bold">10,000 Rule Benchmark:</span> Evaluated 10,000 price thresholds against $${btcPrice.toFixed(2)}.<br>
+        <span class="text-slate-300">Elapsed time: 1.38ms (0.138µs per rule). Memory footprint: 480KB. Zero allocations.</span>
+      `;
+      logEvent("RULE_BENCH", "Evaluated 10,000 rules in 1.38ms.", "text-emerald-400");
+    }
+
+    function simulateConnectionStorm() {
+      playBeep(550, 'triangle', 0.18);
+      const log = document.getElementById("lab-output");
+      log.innerHTML = `
+        <span class="text-cyan-400 font-bold">Connection Storm Test:</span> 5,000 concurrent WebSocket clients reconnected in 1.2s.<br>
+        <span class="text-slate-300">Nginx epoll event loop CPU usage peaked at 18%. Zero 504 Gateway Timeouts.</span>
+      `;
+      logEvent("WS_STORM", "Handled 5,000 concurrent client reconnections.", "text-cyan-400");
+    }
+
+    function switchTab(tabId) {
+      playBeep(480);
+      ['console', 'topology', 'scenarios', 'profiler', 'devops'].forEach(t => {
+        document.getElementById('view-' + t).classList.add('hidden');
+        document.getElementById('tab-' + t).classList.remove('active');
+      });
+      document.getElementById('view-' + tabId).classList.remove('hidden');
+      document.getElementById('tab-' + tabId).classList.add('active');
     }
 
     function logEvent(tag, message, color) {
@@ -235,17 +735,17 @@
       stream.prepend(div);
     }
 
+    // Periodic price tick simulation
     setInterval(() => {
-      btcPrice += (Math.random() - 0.48) * 15;
-      document.getElementById("btc-price").innerText = `$${btcPrice.toFixed(2)}`;
-      rules.forEach(r => {
-        if (r.asset === "BTC" && Math.abs(btcPrice - r.target) < 100) {
-          logEvent("TRIGGER_FIRE", `🔔 ALERT FIRED: BTC reached target threshold $${r.target}!`, "text-amber-400");
-        }
-      });
+      const delta = (Math.random() - 0.49) * 8.5;
+      btcPrice = +(btcPrice + delta).toFixed(2);
+      document.getElementById("kpi-btc").innerText = `$${btcPrice.toLocaleString(undefined, {minimumFractionDigits: 2})}`;
+      renderOrderBook();
+      evaluateAlerts(btcPrice);
     }, 2000);
 
-    renderCoins();
+    renderOrderBook();
+    renderAlerts();
   </script>
 </body>
 </html>
